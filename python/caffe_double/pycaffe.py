@@ -1,5 +1,5 @@
 """
-Wrap the internal caffe C++ module (_caffe.so) with a clean, Pythonic
+Wrap the internal caffe_double C++ module (_caffe.so) with a clean, Pythonic
 interface.
 """
 
@@ -10,22 +10,22 @@ except:
     from itertools import zip_longest as izip_longest
 import numpy as np
 
-from ._caffe import Net
-from ._caffe import SGDSolver
-from ._caffe import NesterovSolver
-from ._caffe import AdaGradSolver
-from ._caffe import RMSPropSolver
-from ._caffe import AdaDeltaSolver
-from ._caffe import AdamSolver
-from ._caffe import NCCL
-from ._caffe import Timer
+from ._caffe_double import Net
+from ._caffe_double import SGDSolver
+from ._caffe_double import NesterovSolver
+from ._caffe_double import AdaGradSolver
+from ._caffe_double import RMSPropSolver
+from ._caffe_double import AdaDeltaSolver
+from ._caffe_double import AdamSolver
+from ._caffe_double import NCCL
+from ._caffe_double import Timer
         
-import caffe.io
+import caffe_double.io
 
 import six
 
 # We directly update methods from Net here (rather than using composition or
-# inheritance) so that nets created by caffe (e.g., by SGDSolver) will
+# inheritance) so that nets created by caffe_double (e.g., by SGDSolver) will
 # automatically have the improved interface.
 
 

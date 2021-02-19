@@ -44,7 +44,7 @@ namespace bp = boost::python;
 namespace caffe {
 
     // For Python, for now, we'll just always use float as the type.
-    const int NPY_DTYPE = NPY_FLOAT32;
+    const int NPY_DTYPE = NPY_FLOAT64;
 
     // Selecting mode.
     void set_mode_cpu() { Caffe::set_mode(Caffe::CPU); }
@@ -90,8 +90,8 @@ namespace caffe {
         if (PyArray_NDIM(arr) != 4) {
             throw std::runtime_error(name + " must be 4-d");
         }
-        if (PyArray_TYPE(arr) != NPY_FLOAT32) {
-            throw std::runtime_error(name + " must be float32");
+        if (PyArray_TYPE(arr) != NPY_FLOAT64) {
+            throw std::runtime_error(name + " must be float64");
         }
         if (PyArray_DIMS(arr)[1] != channels) {
             throw std::runtime_error(name + " has wrong number of channels");
@@ -401,9 +401,9 @@ namespace caffe {
 
     BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SolveOverloads, Solve, 0, 1);
 
-#define DATA_TYPE float
+#define DATA_TYPE double
 
-    BOOST_PYTHON_MODULE(_caffe) {
+    BOOST_PYTHON_MODULE(_caffe_double) {
         // below, we prepend an underscore to methods that will be replaced
         // in Python
 
@@ -577,7 +577,7 @@ namespace caffe {
             .def(bp::vector_indexing_suite<vector<string> >());
         bp::class_<vector<int> >("IntVec")
             .def(bp::vector_indexing_suite<vector<int> >());
-        bp::class_<vector<DATA_TYPE> >("floatVec")
+        bp::class_<vector<DATA_TYPE> >("doubleVec")
             .def(bp::vector_indexing_suite<vector<DATA_TYPE> >());
         bp::class_<vector<shared_ptr<Net<DATA_TYPE> > > >("NetVec")
             .def(bp::vector_indexing_suite<vector<shared_ptr<Net<DATA_TYPE> > >, true>());

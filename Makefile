@@ -1,4 +1,5 @@
 PROJECT := caffe
+PROJECT_TYPED := caffe_double
 
 CONFIG_FILE := Makefile.config
 # Explicitly check for the config file, otherwise make -k will proceed anyway.
@@ -60,9 +61,14 @@ TOOL_SRCS := $(shell find tools -name "*.cpp")
 EXAMPLE_SRCS := $(shell find examples -name "*.cpp")
 # BUILD_INCLUDE_DIR contains any generated header files we want to include.
 BUILD_INCLUDE_DIR := $(BUILD_DIR)/src
+
 # PROTO_SRCS are the protocol buffer definitions
 PROTO_SRC_DIR := src/$(PROJECT)/proto
 PROTO_SRCS := $(wildcard $(PROTO_SRC_DIR)/*.proto)
+
+PROTO_SRC_DIR_TYPED := src/$(PROJECT_TYPED)/proto
+PROTO_SRCS_TYPED := $(wildcard $(PROTO_SRC_DIR_TYPED)/*.proto)
+
 # PROTO_BUILD_DIR will contain the .cc and obj files generated from
 # PROTO_SRCS; PROTO_BUILD_INCLUDE_DIR will contain the .h header files
 PROTO_BUILD_DIR := $(BUILD_DIR)/$(PROTO_SRC_DIR)
@@ -83,10 +89,16 @@ LINT_EXT := lint.txt
 LINT_OUTPUTS := $(addsuffix .$(LINT_EXT), $(addprefix $(LINT_OUTPUT_DIR)/, $(NONGEN_CXX_SRCS)))
 EMPTY_LINT_REPORT := $(BUILD_DIR)/.$(LINT_EXT)
 NONEMPTY_LINT_REPORT := $(BUILD_DIR)/$(LINT_EXT)
+
 # PY$(PROJECT)_SRC is the python wrapper for $(PROJECT)
+PY$(PROJECT)_HXX := include/$(PROJECT)/layers/python_layer.hpp
+
 PY$(PROJECT)_SRC := python/$(PROJECT)/_$(PROJECT).cpp
 PY$(PROJECT)_SO := python/$(PROJECT)/_$(PROJECT).so
-PY$(PROJECT)_HXX := include/$(PROJECT)/layers/python_layer.hpp
+
+PY$(PROJECT_TYPED)_SRC := python/$(PROJECT_TYPED)/_$(PROJECT_TYPED).cpp
+PY$(PROJECT_TYPED)_SO := python/$(PROJECT_TYPED)/_$(PROJECT_TYPED).so
+
 # MAT$(PROJECT)_SRC is the mex entrance point of matlab package for $(PROJECT)
 MAT$(PROJECT)_SRC := matlab/+$(PROJECT)/private/$(PROJECT)_.cpp
 ifneq ($(MATLAB_DIR),)
@@ -103,10 +115,17 @@ PROTO_GEN_HEADER_SRCS := $(addprefix $(PROTO_BUILD_DIR)/, \
 PROTO_GEN_HEADER := $(addprefix $(PROTO_BUILD_INCLUDE_DIR)/, \
 		$(notdir ${PROTO_SRCS:.proto=.pb.h}))
 PROTO_GEN_CC := $(addprefix $(BUILD_DIR)/, ${PROTO_SRCS:.proto=.pb.cc})
+
 PY_PROTO_BUILD_DIR := python/$(PROJECT)/proto
 PY_PROTO_INIT := python/$(PROJECT)/proto/__init__.py
 PROTO_GEN_PY := $(foreach file,${PROTO_SRCS:.proto=_pb2.py}, \
 		$(PY_PROTO_BUILD_DIR)/$(notdir $(file)))
+
+PY_PROTO_BUILD_DIR_TYPED := python/$(PROJECT_TYPED)/proto
+PY_PROTO_INIT_TYPED := python/$(PROJECT_TYPED)/proto/__init__.py
+PROTO_GEN_PY_TYPED := $(foreach file,${PROTO_SRCS_TYPED:.proto=_pb2.py}, \
+		$(PY_PROTO_BUILD_DIR_TYPED)/$(notdir $(file)))
+
 # The objects corresponding to the source files
 # These objects will be linked into the final shared library, so we
 # exclude the tool, example, and test objects.
@@ -519,6 +538,16 @@ $(PY$(PROJECT)_SO): $(PY$(PROJECT)_SRC) $(PY$(PROJECT)_HXX) | $(DYNAMIC_NAME)
 		-o $@ $(LINKFLAGS) -l$(LIBRARY_NAME) $(PYTHON_LDFLAGS) \
 		-Wl,-rpath,$(ORIGIN)/../../build/lib
 
+py$(PROJECT_TYPED): py_typed
+
+py_typed: $(PY$(PROJECT_TYPED)_SO) $(PROTO_GEN_PY_TYPED)
+
+$(PY$(PROJECT_TYPED)_SO): $(PY$(PROJECT_TYPED)_SRC) $(PY$(PROJECT)_HXX) | $(DYNAMIC_NAME)
+	@ echo CXX/LD -o $@ $<
+	$(Q)$(CXX) -shared -o $@ $(PY$(PROJECT_TYPED)_SRC) \
+		-o $@ $(LINKFLAGS) -l$(LIBRARY_NAME) $(PYTHON_LDFLAGS) \
+		-Wl,-rpath,$(ORIGIN)/../../build/lib
+
 mat$(PROJECT): mat
 
 mat: $(MAT$(PROJECT)_SO)
@@ -655,6 +684,14 @@ $(PY_PROTO_BUILD_DIR)/%_pb2.py : $(PROTO_SRC_DIR)/%.proto \
 
 $(PY_PROTO_INIT): | $(PY_PROTO_BUILD_DIR)
 	touch $(PY_PROTO_INIT)
+
+$(PY_PROTO_BUILD_DIR_TYPED)/%_pb2.py : $(PROTO_SRC_DIR)/%.proto \
+		$(PY_PROTO_INIT_TYPE) | $(PY_PROTO_BUILD_DIR_TYPED)
+	@ echo PROTOC \(python\) $<
+	$(Q)protoc --proto_path=src --python_out=python $<
+
+$(PY_PROTO_INIT_TYPED): | $(PY_PROTO_BUILD_DIR_TYPED)
+	touch $(PY_PROTO_INIT_TYPED)
 
 clean:
 	@- $(RM) -rf $(ALL_BUILD_DIRS)

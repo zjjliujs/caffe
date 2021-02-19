@@ -5,6 +5,7 @@ import time
 import yaml
 import hashlib
 import argparse
+import pdb
 
 from six.moves import urllib
 
@@ -54,6 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('dirname', type=valid_dirname)
     args = parser.parse_args()
 
+    pdb.set_trace()
     # A tiny hack: the dirname validator also returns readme YAML frontmatter.
     dirname = args.dirname[0]
     frontmatter = args.dirname[1]
